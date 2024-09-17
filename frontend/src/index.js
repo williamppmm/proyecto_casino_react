@@ -3,6 +3,16 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+// Importación de Bootstrap
+import 'bootstrap/dist/css/bootstrap.min.css';
+// src/services/api.js
+import axios from 'axios';
+
+const API_URL = 'http://localhost:5000/api';
+
+export const getOperadores = () => {
+  return axios.get(`${API_URL}/operadores`);
+};
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

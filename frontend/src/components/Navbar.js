@@ -1,51 +1,52 @@
-// Importaciones necesarias
-import React from 'react';
-import { Navbar, Nav, NavDropdown } from 'react-bootstrap';
-import Logo from '../assets/icons/Logo.svg';
+// src/components/Navbar.js
 
-// Definición del componente funcional
+// Importaciones de bibliotecas externas
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Navbar, Nav, NavDropdown, Container } from 'react-bootstrap';
+
 function NavigationBar() {
   return (
-    // Componente Navbar de react-bootstrap
-    <Navbar expand="lg" bg="dark" variant="dark">
-      {/* Logo y nombre del casino */}
-      <Navbar.Brand href="/">
-        <img
-          src={Logo}
-          width="30"
-          height="30"
-          className="d-inline-block align-top"
-          alt="Casino La Fortuna"
-        />{' '}
-        Casino La Fortuna
-      </Navbar.Brand>
+    <Navbar bg="dark" variant="dark" expand="lg">
+      <Container>
+        {/* Logo del sitio (opcional) */}
+        <Navbar.Brand as={Link} to="/">
+          {/* Aquí puedes añadir el logo */}
+          Casino La Fortuna
+        </Navbar.Brand>
 
-      {/* Botón de toggle para dispositivos móviles */}
-      <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        {/* Botón de toggle para dispositivos móviles */}
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
 
-      {/* Contenido de la barra de navegación */}
-      <Navbar.Collapse id="basic-navbar-nav">
-        <Nav className="ml-auto">
-          {/* Enlaces de navegación */}
-          <Nav.Link href="/">Inicio</Nav.Link>
-          <Nav.Link href="/quienes-somos">Quiénes somos</Nav.Link>
-          <Nav.Link href="/juegos">Juegos</Nav.Link>
-          <Nav.Link href="/promociones">Promociones</Nav.Link>
-          <Nav.Link href="/contacto">Contacto</Nav.Link>
+        {/* Enlaces de navegación */}
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="me-auto">
+            <Nav.Link as={Link} to="/">Inicio</Nav.Link>
+            <Nav.Link as={Link} to="/quienes-somos">Quiénes somos</Nav.Link>
+            <Nav.Link as={Link} to="/juegos">Juegos</Nav.Link>
+            <Nav.Link as={Link} to="/promociones">Promociones</Nav.Link>
+            <Nav.Link as={Link} to="/contacto">Contacto</Nav.Link>
+          </Nav>
 
-          {/* Menú desplegable para opciones de cuenta */}
-          <NavDropdown title="Cuenta" id="basic-nav-dropdown">
-            <NavDropdown.Item href="/registro-cliente">Registro Cliente</NavDropdown.Item>
-            <NavDropdown.Item href="/login-cliente">Login Cliente</NavDropdown.Item>
-            <NavDropdown.Divider />
-            <NavDropdown.Item href="/registro-operador">Registro Operador</NavDropdown.Item>
-            <NavDropdown.Item href="/login-operador">Login Operador</NavDropdown.Item>
-          </NavDropdown>
-        </Nav>
-      </Navbar.Collapse>
+          <Nav>
+            <NavDropdown title="Cuenta" id="basic-nav-dropdown" align="end">
+              {/* Submenú para Clientes */}
+              <NavDropdown.Header>Cliente</NavDropdown.Header>
+              <NavDropdown.Item as={Link} to="/login-cliente">Iniciar sesión Cliente</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/registro-cliente">Registrarse como Cliente</NavDropdown.Item>
+
+              <NavDropdown.Divider /> {/* Separador entre las secciones */}
+
+              {/* Submenú para Operadores */}
+              <NavDropdown.Header>Operador</NavDropdown.Header>
+              <NavDropdown.Item as={Link} to="/login-operador">Iniciar sesión Operador</NavDropdown.Item>
+              <NavDropdown.Item as={Link} to="/registro-operador">Registrarse como Operador</NavDropdown.Item>
+            </NavDropdown>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
     </Navbar>
   );
 }
 
-// Exportación del componente
 export default NavigationBar;

@@ -1,11 +1,15 @@
+// src/App.js
+
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavigationBar from './components/Navbar';
+import Footer from './components/Footer'; // Footer del sitio
 import Home from './pages/Home';
 import QuienesSomos from './pages/QuienesSomos';
 import Juegos from './pages/Juegos';
 import Promociones from './pages/Promociones';
 import Contacto from './pages/Contacto';
+import WhatsAppButton from './components/WhatsAppButton';
 
 function App() {
   return (
@@ -17,8 +21,9 @@ function App() {
         <Route path="/juegos" element={<Juegos />} />
         <Route path="/promociones" element={<Promociones />} />
         <Route path="/contacto" element={<Contacto />} />
-        {/* Agrega más rutas según sea necesario */}
       </Routes>
+      <WhatsAppButton />
+      <Footer />
     </Router>
   );
 }

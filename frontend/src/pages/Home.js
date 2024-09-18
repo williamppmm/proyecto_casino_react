@@ -1,36 +1,34 @@
-// Importaciones necesarias
+// src/pages/Home.js
+
+// 1. Importaciones de bibliotecas externas
 import React from 'react';
-// Importación de componentes de react-bootstrap para el diseño
-import { Container, Row, Col, Button } from 'react-bootstrap';
-// Importación del logo del casino
+import { Container, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
+
+// 2. Importaciones de assets
 import Logo from '../assets/icons/Logo.svg';
 
 // Definición del componente funcional Home
 function Home() {
   return (
-    // Sección principal con clases para centrar el texto y añadir margen
-    <section className="text-center my-5">
-      {/* Contenedor Bootstrap para un diseño responsive */}
-      <Container>
+    <section className="home-section d-flex flex-column justify-content-center align-items-center" 
+      style={{ backgroundColor: '#000', color: '#fff', height: '100vh' }}>
+      <Container className="text-center">
         {/* Logo del casino */}
-        <img 
-          src={Logo} 
-          alt="Casino La Fortuna" 
-          className="mb-4" // Clase para añadir margen inferior
-          style={{ maxWidth: '200px' }} // Estilo en línea para limitar el tamaño máximo
+        <img
+          src={Logo}
+          alt="Casino La Fortuna"
+          style={{ maxWidth: '250px', marginBottom: '20px' }} // Ajuste del tamaño del logo
         />
+
+        {/* Texto principal de bienvenida */}
+        <h1 className="mb-4" style={{ fontWeight: 'bold', fontSize: '2.5rem' }}>Bienvenido a Casino La Fortuna</h1>
         
-        {/* Título principal de bienvenida */}
-        <h1>Bienvenido a Casino La Fortuna</h1>
+        {/* Texto descriptivo */}
+        <p style={{ fontSize: '1.2rem' }}>Descubre un mundo de emoción y entretenimiento.</p>
         
-        {/* Breve descripción o eslogan */}
-        <p>Descubre un mundo de emoción y entretenimiento.</p>
-        
-        {/* Botón de llamada a la acción para registro */}
-        <Button 
-          variant="danger" // Variante de color rojo para el botón
-          href="/registro-cliente" // Enlace a la página de registro
-        >
+        {/* Botón de llamada a la acción */}
+        <Button variant="primary" as={Link} to="/registro-cliente" size="lg">
           ¡Regístrate ahora!
         </Button>
       </Container>

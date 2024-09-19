@@ -31,8 +31,8 @@ db.connect((err) => {
 
 // Registro de cliente
 app.post('/api/clientes/registro', (req, res) => {
-  // Verificamos lo que estamos recibiendo en el body
-  console.log(req.body);
+  // Log de los datos recibidos en el body
+  console.log('Datos recibidos para registro:', req.body);
 
   const {
     tipo_documento, numero_documento, fecha_expedicion, primer_nombre, segundo_nombre, 
@@ -41,35 +41,48 @@ app.post('/api/clientes/registro', (req, res) => {
     pep, consentimiento_datos, comunicaciones_comerciales, terminos_condiciones, captcha
   } = req.body;
 
-  // Hashear la contraseña
-  bcrypt.hash(user_pass, 10, (err, hashedPassword) => {
+  // Verificar si el correo o el número de documento ya existen
+  const checkDuplicateQuery = 'SELECT * FROM clientes WHERE correo_electronico = ? OR numero_documento = ?';
+  db.query(checkDuplicateQuery, [correo_electronico, numero_documento], (err, results) => {
     if (err) {
-      console.error('Error al hashear la contraseña:', err);
-      return res.status(500).send('Error en el servidor al procesar la contraseña');
+      console.error('Error en la verificación de duplicados:', err);
+      return res.status(500).send('Error en el servidor durante la verificación.');
+    }
+    if (results.length > 0) {
+      console.log('Intento de registro con correo o documento duplicado');
+      return res.status(400).send('El correo electrónico o número de documento ya están registrados.');
     }
 
-    const sql = `
-      INSERT INTO clientes (
+    // Proceder con el registro si no hay duplicados
+    bcrypt.hash(user_pass, 10, (hashErr, hashedPassword) => {
+      if (hashErr) {
+        console.error('Error al hashear la contraseña:', hashErr);
+        return res.status(500).send('Error en el servidor al procesar la contraseña');
+      }
+
+      const insertQuery = `
+        INSERT INTO clientes (
+          tipo_documento, numero_documento, fecha_expedicion, primer_nombre, segundo_nombre, 
+          primer_apellido, segundo_apellido, lugar_expedicion, correo_electronico, telefono_movil, 
+          user_pass, fecha_nacimiento, genero, nacionalidad, direccion, municipio, interdicto, 
+          pep, consentimiento_datos, comunicaciones_comerciales, terminos_condiciones, captcha
+        ) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      db.query(insertQuery, [
         tipo_documento, numero_documento, fecha_expedicion, primer_nombre, segundo_nombre, 
         primer_apellido, segundo_apellido, lugar_expedicion, correo_electronico, telefono_movil, 
-        user_pass, fecha_nacimiento, genero, nacionalidad, direccion, municipio, interdicto, 
+        hashedPassword, fecha_nacimiento, genero, nacionalidad, direccion, municipio, interdicto, 
         pep, consentimiento_datos, comunicaciones_comerciales, terminos_condiciones, captcha
-      ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    db.query(sql, [
-      tipo_documento, numero_documento, fecha_expedicion, primer_nombre, segundo_nombre, 
-      primer_apellido, segundo_apellido, lugar_expedicion, correo_electronico, telefono_movil, 
-      hashedPassword, fecha_nacimiento, genero, nacionalidad, direccion, municipio, interdicto, 
-      pep, consentimiento_datos, comunicaciones_comerciales, terminos_condiciones, captcha
-    ], (err, result) => {
-      if (err) {
-        console.error('Error al registrar cliente:', err);
-        res.status(500).send(`Error en el registro: ${err.message}`);
-      } else {
+      ], (insertErr, result) => {
+        if (insertErr) {
+          console.error('Error al registrar cliente:', insertErr);
+          return res.status(500).send(`Error en el registro: ${insertErr.message}`);
+        }
+        console.log('Cliente registrado exitosamente');
         res.status(200).send('Cliente registrado exitosamente');
-      }
+      });
     });
   });
 });

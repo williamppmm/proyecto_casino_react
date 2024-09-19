@@ -1,15 +1,17 @@
-//  src/pages/RegistroClientes.js
+// src/pages/RegistroClientes.js
 
-// Importaciones necesarias
-import React, { useState } from 'react';
-import { Container, Form, Button, Row, Col, Modal, Card } from 'react-bootstrap';
+import React, { useState, useRef } from 'react';
+import { Container, Form, Button, Row, Col, Card, Alert } from 'react-bootstrap';
 import axios from 'axios';
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
 import { useNavigate } from 'react-router-dom';
 
-// Componente principal de Registro de Clientes
+// Función auxiliar para eliminar acentos
+const removeAccents = (str) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
+
 function RegistroClientes() {
-  // Estado inicial del formulario
   const initialFormData = {
     tipo_documento: '',
     numero_documento: '',
@@ -36,61 +38,85 @@ function RegistroClientes() {
     captcha: false,
   };
 
-  // Estados del componente
   const [formData, setFormData] = useState(initialFormData);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const successMessageRef = useRef(null);
 
-  // Manejador de cambios en los campos del formulario
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value,
-    });
+  const normalizeFormData = (data) => {
+    const upperCaseFields = ['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'lugar_expedicion', 'direccion', 'municipio', 'nacionalidad'];
+    
+    return Object.keys(data).reduce((acc, key) => {
+      if (typeof data[key] === 'string') {
+        if (upperCaseFields.includes(key)) {
+          acc[key] = removeAccents(data[key].toUpperCase());
+        } else if (key === 'correo_electronico') {
+          acc[key] = removeAccents(data[key].toLowerCase()).replace(/ñ/g, 'n');
+        } else {
+          acc[key] = removeAccents(data[key]);
+        }
+      } else {
+        acc[key] = data[key];
+      }
+      return acc;
+    }, {});
   };
 
-  // Manejador de envío del formulario
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorMessage('');
+    setShowSuccess(false);
+
     if (formData.user_pass !== formData.confirm_password) {
-      alert('Las contraseñas no coinciden');
+      setErrorMessage('Las contraseñas no coinciden');
       return;
     }
 
-    // Envío de datos al servidor
-    axios
-      .post('http://localhost:5000/api/clientes/registro', formData)
+    const normalizedData = normalizeFormData(formData);
+
+    axios.post('http://localhost:5000/api/clientes/registro', normalizedData)
       .then((response) => {
-        setShowModal(true);
-        setFormData(initialFormData); // Limpiar el formulario después de un registro exitoso
+        setShowSuccess(true);
+        if (successMessageRef.current) {
+          successMessageRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+        setTimeout(() => {
+          setShowSuccess(false);
+          navigate('/login-cliente');
+        }, 3000);
       })
       .catch((error) => {
         console.error('Error al registrar cliente:', error);
-        alert('Error en el registro');
+        if (error.response && error.response.data && error.response.data.message) {
+          setErrorMessage(error.response.data.message);
+        } else {
+          setErrorMessage('Error en el registro. Por favor, intenta de nuevo.');
+        }
       });
   };
 
-  // Manejador para cerrar el modal y redirigir al login
-  const handleCloseModal = () => {
-    setShowModal(false);
-    navigate('/login-cliente');
-  };
-
-  // Renderizado del componente
   return (
     <section className="registro-clientes-section py-5" style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
       <Container>
         <h1 className="text-center mb-5" style={{ color: '#fff', fontWeight: 'bold' }}>Registro de Clientes</h1>
-        
+
         <Card className="bg-dark text-white">
           <Card.Body>
             <Form onSubmit={handleSubmit}>
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="tipoDocumento">
+                  <Form.Group controlId="tipoDocumento" className="mb-3">
                     <Form.Label>Tipo de Documento</Form.Label>
                     <Form.Select name="tipo_documento" value={formData.tipo_documento} onChange={handleChange} required className="bg-dark text-white">
                       <option value="">Selecciona...</option>
@@ -100,7 +126,7 @@ function RegistroClientes() {
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="numeroDocumento">
+                  <Form.Group controlId="numeroDocumento" className="mb-3">
                     <Form.Label>Número de Documento</Form.Label>
                     <Form.Control type="text" name="numero_documento" value={formData.numero_documento} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
@@ -109,13 +135,13 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="fechaExpedicion">
+                  <Form.Group controlId="fechaExpedicion" className="mb-3">
                     <Form.Label>Fecha de Expedición</Form.Label>
                     <Form.Control type="date" name="fecha_expedicion" value={formData.fecha_expedicion} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="lugarExpedicion">
+                  <Form.Group controlId="lugarExpedicion" className="mb-3">
                     <Form.Label>Lugar de Expedición</Form.Label>
                     <Form.Control type="text" name="lugar_expedicion" value={formData.lugar_expedicion} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
@@ -124,13 +150,13 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="primerNombre">
+                  <Form.Group controlId="primerNombre" className="mb-3">
                     <Form.Label>Primer Nombre</Form.Label>
                     <Form.Control type="text" name="primer_nombre" value={formData.primer_nombre} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="segundoNombre">
+                  <Form.Group controlId="segundoNombre" className="mb-3">
                     <Form.Label>Segundo Nombre</Form.Label>
                     <Form.Control type="text" name="segundo_nombre" value={formData.segundo_nombre} onChange={handleChange} className="bg-dark text-white" />
                   </Form.Group>
@@ -139,13 +165,13 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="primerApellido">
+                  <Form.Group controlId="primerApellido" className="mb-3">
                     <Form.Label>Primer Apellido</Form.Label>
                     <Form.Control type="text" name="primer_apellido" value={formData.primer_apellido} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="segundoApellido">
+                  <Form.Group controlId="segundoApellido" className="mb-3">
                     <Form.Label>Segundo Apellido</Form.Label>
                     <Form.Control type="text" name="segundo_apellido" value={formData.segundo_apellido} onChange={handleChange} className="bg-dark text-white" />
                   </Form.Group>
@@ -154,13 +180,13 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="correoElectronico">
+                  <Form.Group controlId="correoElectronico" className="mb-3">
                     <Form.Label>Correo Electrónico</Form.Label>
                     <Form.Control type="email" name="correo_electronico" value={formData.correo_electronico} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="telefonoMovil">
+                  <Form.Group controlId="telefonoMovil" className="mb-3">
                     <Form.Label>Teléfono Móvil</Form.Label>
                     <Form.Control type="tel" name="telefono_movil" value={formData.telefono_movil} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
@@ -169,7 +195,7 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="user_pass">
+                  <Form.Group controlId="user_pass" className="mb-3">
                     <Form.Label>Contraseña</Form.Label>
                     <div className="input-group">
                       <Form.Control
@@ -180,17 +206,14 @@ function RegistroClientes() {
                         required
                         className="bg-dark text-white"
                       />
-                      <Button 
-                        variant="outline-light"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
+                      <Button variant="outline-light" onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <BsEyeSlash /> : <BsEye />}
                       </Button>
                     </div>
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="confirm_password">
+                  <Form.Group controlId="confirm_password" className="mb-3">
                     <Form.Label>Confirmar Contraseña</Form.Label>
                     <div className="input-group">
                       <Form.Control
@@ -201,10 +224,7 @@ function RegistroClientes() {
                         required
                         className="bg-dark text-white"
                       />
-                      <Button 
-                        variant="outline-light"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
+                      <Button variant="outline-light" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                         {showConfirmPassword ? <BsEyeSlash /> : <BsEye />}
                       </Button>
                     </div>
@@ -214,13 +234,13 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="fechaNacimiento">
+                  <Form.Group controlId="fechaNacimiento" className="mb-3">
                     <Form.Label>Fecha de Nacimiento</Form.Label>
                     <Form.Control type="date" name="fecha_nacimiento" value={formData.fecha_nacimiento} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="genero">
+                  <Form.Group controlId="genero" className="mb-3">
                     <Form.Label>Género</Form.Label>
                     <Form.Select name="genero" value={formData.genero} onChange={handleChange} required className="bg-dark text-white">
                       <option value="">Selecciona...</option>
@@ -234,13 +254,13 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="nacionalidad">
+                  <Form.Group controlId="nacionalidad" className="mb-3">
                     <Form.Label>Nacionalidad</Form.Label>
                     <Form.Control type="text" name="nacionalidad" value={formData.nacionalidad} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="direccion">
+                  <Form.Group controlId="direccion" className="mb-3">
                     <Form.Label>Dirección</Form.Label>
                     <Form.Control type="text" name="direccion" value={formData.direccion} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
@@ -249,17 +269,17 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="municipio">
+                  <Form.Group controlId="municipio" className="mb-3">
                     <Form.Label>Municipio</Form.Label>
                     <Form.Control type="text" name="municipio" value={formData.municipio} onChange={handleChange} required className="bg-dark text-white" />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="interdicto">
+                  <Form.Group controlId="interdicto" className="mb-3">
                     <Form.Label>Interdicto</Form.Label>
                     <Form.Select name="interdicto" value={formData.interdicto} onChange={handleChange} required className="bg-dark text-white">
                       <option value="no">No</option>
-                      <option value="si">Sí</option>
+                      <option value="yes">Sí</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>
@@ -267,11 +287,11 @@ function RegistroClientes() {
 
               <Row>
                 <Col md={6}>
-                  <Form.Group className="mb-3" controlId="pep">
+                  <Form.Group controlId="pep" className="mb-3">
                     <Form.Label>PEP (Persona Expuesta Políticamente)</Form.Label>
                     <Form.Select name="pep" value={formData.pep} onChange={handleChange} required className="bg-dark text-white">
                       <option value="no">No</option>
-                      <option value="si">Sí</option>
+                      <option value="yes">Sí</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>
@@ -309,33 +329,29 @@ function RegistroClientes() {
                 />
               </Form.Group>
 
+              {errorMessage && (
+                <Alert variant="danger" className="mt-3">
+                  {errorMessage}
+                </Alert>
+              )}
+
               <Button variant="primary" type="submit" className="w-100 mt-4">
                 Registrarse
               </Button>
+              
+              {/* Mostrar mensaje de éxito cuando el registro es exitoso */}
+              {showSuccess && (
+                <Alert variant="success" className="mb-4">
+                  Registro exitoso. Redirigiendo al login...
+                </Alert>
+              )}
             </Form>
           </Card.Body>
         </Card>
       </Container>
-
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Registro Exitoso</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Tu registro se ha completado con éxito.</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Cerrar
-          </Button>
-          <Button variant="primary" onClick={handleCloseModal}>
-            Iniciar Sesión
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </section>
   );
 }
 
-// Exportación del componente para su uso en otras partes de la aplicación
+// Exportación del componente
 export default RegistroClientes;

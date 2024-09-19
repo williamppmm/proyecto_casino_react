@@ -2,7 +2,7 @@
 
 // Importaciones necesarias
 import React, { useState } from 'react';
-import { Container, Form, Button, Row, Col, Modal } from 'react-bootstrap';
+import { Container, Form, Button, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
@@ -14,7 +14,6 @@ function LoginClientes() {
     correo_electronico: '',
     user_pass: '',
   });
-  const [showModal, setShowModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -33,8 +32,8 @@ function LoginClientes() {
     e.preventDefault();
     axios
       .post('http://localhost:5000/api/clientes/login', formData) // Enviar credenciales al backend
-      .then((response) => {
-        setShowModal(true); // Mostrar modal si el login es exitoso
+      .then(() => {
+        navigate('/dashboard-cliente'); // Redirigir directamente al dashboard tras login exitoso
       })
       .catch((error) => {
         console.error('Error en el login:', error);
@@ -42,13 +41,7 @@ function LoginClientes() {
       });
   };
 
-  // Manejador para cerrar el modal y redirigir al home
-  const handleCloseModal = () => {
-    setShowModal(false);
-    navigate('/'); // Redirigir a la página de inicio
-  };
-
-  // Renderizado del formulario de login y modal de éxito
+  // Renderizado del formulario de login
   return (
     <section className="login-clientes-section py-5" style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
       <Container>
@@ -101,21 +94,6 @@ function LoginClientes() {
           </Button>
         </Form>
       </Container>
-
-      {/* Modal para indicar que el login fue exitoso */}
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Login Exitoso</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>Has iniciado sesión correctamente.</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Cerrar
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </section>
   );
 }

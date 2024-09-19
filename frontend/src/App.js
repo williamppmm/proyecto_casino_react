@@ -3,8 +3,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import NavigationBar from './components/Navbar';
-import Footer from './components/Footer'; // Footer del sitio
+import Footer from './components/Footer';
 import Home from './pages/Home';
+import RegistroClientes from './pages/RegistroClientes';
+import LoginClientes from './pages/LoginClientes';
 import QuienesSomos from './pages/QuienesSomos';
 import Juegos from './pages/Juegos';
 import Promociones from './pages/Promociones';
@@ -17,6 +19,8 @@ function App() {
       <NavigationBar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login-cliente" element={<LoginClientes />} />
+        <Route path="/registro-cliente" element={<RegistroClientes />} />
         <Route path="/quienes-somos" element={<QuienesSomos />} />
         <Route path="/juegos" element={<Juegos />} />
         <Route path="/promociones" element={<Promociones />} />

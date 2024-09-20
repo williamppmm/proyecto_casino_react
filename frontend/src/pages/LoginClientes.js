@@ -9,16 +9,22 @@ import { BsEye, BsEyeSlash } from 'react-icons/bs';
 
 // Componente principal para el Login de Clientes
 function LoginClientes() {
-  // Estado inicial del formulario
+  // Estado inicial del formulario con los campos de correo electrónico y contraseña
   const [formData, setFormData] = useState({
     correo_electronico: '',
     user_pass: '',
   });
+
+  // Estado para almacenar el mensaje de error en caso de fallo
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Estado para mostrar/ocultar la contraseña en el input
   const [showPassword, setShowPassword] = useState(false);
+
+  // Hook de navegación para redirigir a otras rutas
   const navigate = useNavigate();
 
-  // Manejador para actualizar los campos del formulario
+  // Manejador para actualizar los campos del formulario cuando el usuario escribe
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -27,30 +33,49 @@ function LoginClientes() {
     });
   };
 
-  // Manejador para el envío del formulario
+  // Manejador para el envío del formulario de login
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Realizar la petición POST al backend para el login
     axios
-      .post('http://localhost:5000/api/clientes/login', formData) // Enviar credenciales al backend
-      .then(() => {
-        navigate('/dashboard-cliente'); // Redirigir directamente al dashboard tras login exitoso
+      .post('http://localhost:5000/api/clientes/login', formData)
+      .then((response) => {
+        // Extraer el ID del cliente desde la respuesta
+        const { clienteId } = response.data;
+
+        // Almacenar el ID del cliente en localStorage para utilizarlo más tarde
+        localStorage.setItem('clienteId', clienteId);
+
+        // Redirigir al DashboardClientes después del inicio de sesión exitoso
+        navigate('/dashboard-cliente');
       })
       .catch((error) => {
+        // Si el login falla, mostrar un mensaje de error
         console.error('Error en el login:', error);
-        setErrorMessage('Correo o contraseña incorrectos'); // Mostrar mensaje de error si falló
+        setErrorMessage('Correo o contraseña incorrectos');
       });
   };
 
   // Renderizado del formulario de login
   return (
-    <section className="login-clientes-section py-5" style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
+    <section
+      className="login-cliente-section py-5"
+      style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}
+    >
       <Container>
-        <h1 className="text-center mb-5" style={{ color: '#fff', fontWeight: 'bold' }}>Login de Clientes</h1>
-        
+        {/* Título del formulario */}
+        <h1 className="text-center mb-5" style={{ color: '#fff', fontWeight: 'bold' }}>
+          Login de Clientes
+        </h1>
+
+        {/* Formulario de inicio de sesión */}
         <Form onSubmit={handleSubmit} className="bg-dark p-4 rounded">
-          {errorMessage && <p className="text-danger">{errorMessage}</p>} {/* Mostrar mensaje de error si lo hay */}
-          
+          {/* Mostrar mensaje de error en caso de fallo */}
+          {errorMessage && <p className="text-danger">{errorMessage}</p>}
+
           <Row>
+            {/* Input del correo electrónico */}
             <Col md={6}>
               <Form.Group controlId="correo_electronico">
                 <Form.Label>Correo Electrónico</Form.Label>
@@ -65,30 +90,32 @@ function LoginClientes() {
               </Form.Group>
             </Col>
 
+            {/* Input de la contraseña con la opción de mostrar/ocultar */}
             <Col md={6}>
               <Form.Group controlId="user_pass">
                 <Form.Label>Contraseña</Form.Label>
                 <div className="input-group">
                   <Form.Control
-                    type={showPassword ? 'text' : 'password'} // Cambiar el tipo entre texto y password
+                    type={showPassword ? 'text' : 'password'} // Cambiar entre texto y password
                     name="user_pass"
                     value={formData.user_pass}
                     onChange={handleChange}
                     required
                     className="bg-dark text-white"
                   />
-                  {/* Botón para mostrar/ocultar contraseña */}
-                  <Button 
+                  <Button
                     variant="outline-light"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <BsEyeSlash /> : <BsEye />} {/* Icono de ojo */}
+                    {/* Mostrar el icono de ojo dependiendo del estado */}
+                    {showPassword ? <BsEyeSlash /> : <BsEye />}
                   </Button>
                 </div>
               </Form.Group>
             </Col>
           </Row>
 
+          {/* Botón para iniciar sesión */}
           <Button variant="primary" type="submit" className="w-100 mt-4">
             Iniciar Sesión
           </Button>
@@ -98,5 +125,5 @@ function LoginClientes() {
   );
 }
 
-// Exportación del componente
+// Exportación del componente para su uso en otras partes de la aplicación
 export default LoginClientes;

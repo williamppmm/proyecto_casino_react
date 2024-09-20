@@ -130,6 +130,32 @@ app.post('/api/clientes/login', (req, res) => {
   });
 });
 
+// Perfil de cliente
+app.get('/api/clientes/perfil/:id', (req, res) => {
+  const clienteId = req.params.id;
+
+  const query = 'SELECT primer_nombre, primer_apellido, correo_electronico, telefono_movil FROM clientes WHERE id_cliente = ?';
+  
+  db.query(query, [clienteId], (err, results) => {
+    if (err) {
+      console.error('Error al obtener perfil del cliente:', err);
+      return res.status(500).json({ error: 'Error al obtener perfil del cliente' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    const cliente = results[0];
+    res.json({
+      nombre: cliente.primer_nombre,
+      apellido: cliente.primer_apellido,
+      email: cliente.correo_electronico,
+      telefono: cliente.telefono_movil
+    });
+  });
+});
+
 // Ruta de ejemplo para obtener operadores
 app.get('/api/operadores', (req, res) => {
   const sql = 'SELECT * FROM operadores';

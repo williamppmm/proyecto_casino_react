@@ -703,6 +703,280 @@ function App() {
 }
 ```
 
+### 8.6. Consulta del perfil del cliente desde el backend
+
+Se creó una consulta en el backend que permite obtener la información del cliente registrado, como nombre, apellido, correo electrónico y teléfono, para mostrarla en el dashboard.
+
+```javascript
+// Perfil de cliente
+app.get('/api/clientes/perfil/:id', (req, res) => {
+  const clienteId = req.params.id;
+
+  const query = 'SELECT primer_nombre, primer_apellido, correo_electronico, telefono_movil FROM clientes WHERE id_cliente = ?';
+  
+  db.query(query, [clienteId], (err, results) => {
+    if (err) {
+      console.error('Error al obtener perfil del cliente:', err);
+      return res.status(500).json({ error: 'Error al obtener perfil del cliente' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Cliente no encontrado' });
+    }
+
+    const cliente = results[0];
+    res.json({
+      nombre: cliente.primer_nombre,
+      apellido: cliente.primer_apellido,
+      email: cliente.correo_electronico,
+      telefono: cliente.telefono_movil
+    });
+  });
+});
+```
+
+### 8.7. Implementación del contador de sesión en la barra de navegación
+
+Se implementó un contador de sesión que se muestra en la barra de navegación y sigue contando el tiempo en que el cliente está conectado. El contador usa el formato hh:mm:ss y se reinicia al cerrar sesión.
+
+```javascript
+//  src/components/NavbarClientes.js
+import React, { useEffect, useState } from 'react';
+import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
+
+// Función para formatear el tiempo en hh:mm:ss
+const formatTime = (seconds) => {
+  const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+  const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
+};
+
+function NavbarClientes() {
+  const [sessionTime, setSessionTime] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setSessionTime(prevTime => prevTime + 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('clienteId');
+    navigate('/login-cliente');
+  };
+
+  return (
+    <Navbar bg="dark" variant="dark" expand="lg">
+      <Container>
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav>
+            <NavDropdown title="Mi Cuenta" id="basic-nav-dropdown" align="end">
+              <NavDropdown.Item as={Link} to="/perfil-cliente">Mi Perfil</NavDropdown.Item>
+              <NavDropdown.Item onClick={handleLogout}>Cerrar Sesión</NavDropdown.Item>
+            </NavDropdown>
+            <Navbar.Text className="ms-3">
+              Sesión: {formatTime(sessionTime)}
+            </Navbar.Text>
+          </Nav>
+        </Navbar.Collapse>
+      </Container>
+    </Navbar>
+  );
+}
+
+export default NavbarClientes;
+```
+
+### 8.8. Uso de LayoutClientes para estructurar las páginas
+
+Se implementó LayoutClientes como un componente estructural que contiene la barra de navegación y el botón de WhatsApp. Esto permite mantener una estructura consistente a través de todas las páginas de clientes.
+
+```javascript
+//  src/components/LayoutClientes.js
+import React from 'react';
+import NavbarClientes from './NavbarClientes'; 
+import WhatsAppButton from './WhatsAppButton';
+
+function LayoutClientes({ children }) {
+  return (
+    <div className="d-flex flex-column min-vh-100">
+      <NavbarClientes />
+      <div className="flex-grow-1">
+        {children}
+      </div>
+      <WhatsAppButton />
+    </div>
+  );
+}
+
+export default LayoutClientes;
+```
+
+### 8.9. Dashboard de Clientes
+
+El dashboard muestra los datos del cliente y proporciona accesos directos a varias secciones, como el perfil, el historial de juegos, promociones y soporte. Además, se corrigió el cierre de sesión y se mejoró la navegación dentro del dashboard.
+
+```javascript
+//  src/pages/DashboardClientes.js
+import React, { useEffect, useState } from 'react';
+import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import LayoutClientes from '../components/LayoutClientes';
+import axios from 'axios';
+
+function DashboardClientes() {
+  const [cliente, setCliente] = useState(null);
+  const navigate = useNavigate();
+
+  // Función para obtener los datos del cliente
+  const obtenerPerfilCliente = async () => {
+    const clienteId = localStorage.getItem('clienteId');
+    if (clienteId) {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/clientes/perfil/${clienteId}`);
+        setCliente(response.data);
+      } catch (error) {
+        console.error('Error al obtener los datos del cliente:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const clienteId = localStorage.getItem('clienteId');
+    if (!clienteId) {
+      // Redirigir al login si no hay clienteId en localStorage
+      navigate('/login-cliente');
+    } else {
+      obtenerPerfilCliente();
+    }
+  }, [navigate]);
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    localStorage.removeItem('clienteId');
+    navigate('/login-cliente');
+  };
+
+  return (
+    <LayoutClientes>
+      <section className="dashboard-clientes-section py-5" style={{ backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
+        <Container>
+          <h1 className="text-center mb-5" style={{ color: '#fff', fontWeight: 'bold' }}>
+            Bienvenido al Dashboard de Clientes
+          </h1>
+
+          {/* Mostrar datos del cliente si están disponibles */}
+          {cliente ? (
+            <div className="mb-4 text-center" style={{ color: '#fff' }}>
+              <p><strong>Nombre:</strong> {cliente.nombre} {cliente.apellido}</p>
+              <p><strong>Correo:</strong> {cliente.email}</p>
+              <p><strong>Teléfono:</strong> {cliente.telefono}</p>
+            </div>
+          ) : (
+            <p className="text-center text-light">Cargando datos del cliente...</p>
+          )}
+
+          <Row className="mb-4">
+            {/* Tarjetas de acceso rápido */}
+            <Col md={4}>
+              <Card className="bg-dark text-white">
+                <Card.Body>
+                  <Card.Title>Perfil</Card.Title>
+                  <Card.Text>
+                    Ver y actualizar información personal
+                  </Card.Text>
+                  <Button variant="primary" className="w-100" onClick={() => navigate('/perfil-cliente')}>
+                    Acceder
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={4}>
+              <Card className="bg-dark text-white">
+                <Card.Body>
+                  <Card.Title>Historial de Juegos</Card.Title>
+                  <Card.Text>
+                    Consultar el historial de juegos y apuestas
+                  </Card.Text>
+                  <Button variant="primary" className="w-100" onClick={() => navigate('/historial-juegos')}>
+                    Acceder
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={4}>
+              <Card className="bg-dark text-white">
+                <Card.Body>
+                  <Card.Title>Promociones</Card.Title>
+                  <Card.Text>
+                    Ver promociones y bonos disponibles
+                  </Card.Text>
+                  <Button variant="primary" className="w-100" onClick={() => navigate('/promociones')}>
+                    Acceder
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col md={4}>
+              <Card className="bg-dark text-white">
+                <Card.Body>
+                  <Card.Title>Mis Transacciones</Card.Title>
+                  <Card.Text>
+                    Ver el historial de transacciones y pagos
+                  </Card.Text>
+                  <Button variant="primary" className="w-100" onClick={() => navigate('/transacciones-clientes')}>
+                    Acceder
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={4}>
+              <Card className="bg-dark text-white">
+                <Card.Body>
+                  <Card.Title>Soporte</Card.Title>
+                  <Card.Text>
+                    Contactar al soporte técnico o atención al cliente
+                  </Card.Text>
+                  <Button variant="primary" className="w-100" onClick={() => navigate('/soporte')}>
+                    Acceder
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={4}>
+              <Card className="bg-dark text-white">
+                <Card.Body>
+                  <Card.Title>Cerrar Sesión</Card.Title>
+                  <Card.Text>
+                    Cerrar tu sesión actual
+                  </Card.Text>
+                  <Button variant="danger" className="w-100" onClick={handleLogout}>
+                    Cerrar Sesión
+                  </Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </section>
+    </LayoutClientes>
+  );
+}
+
+export default DashboardClientes;
+```
 ## 9. Consideraciones de seguridad
 
 Al implementar funcionalidades de registro y login, es crucial tener en cuenta las siguientes consideraciones de seguridad:
@@ -730,3 +1004,59 @@ Después de implementar y probar exitosamente el registro y login de clientes, a
 7. Crear un panel de administración para los operadores del casino.
 
 Recuerda siempre priorizar la seguridad y la experiencia del usuario al continuar desarrollando la aplicación Casino La Fortuna.
+
+# Anexo: Visualización del Proyecto React utilizando ngrok
+
+Este anexo proporciona instrucciones paso a paso para visualizar tu proyecto React en otro dispositivo utilizando ngrok.
+
+## Paso 1: Iniciar la aplicación React en tu máquina local
+
+1. Abre un terminal en la carpeta frontend de tu proyecto React:
+   - Ve a la ubicación `D:\proyecto_casino_react\frontend`.
+   - Abre un terminal o consola en esa ubicación.
+
+2. Ejecuta tu proyecto React:
+   - En el terminal, ejecuta el siguiente comando:
+     ```
+     npm start
+     ```
+   - Esto iniciará tu aplicación React en `http://localhost:3000`.
+   - Mantén este terminal abierto mientras trabajas, ya que tu servidor de desarrollo de React debe seguir corriendo.
+
+## Paso 2: Configurar y ejecutar ngrok
+
+1. Abre otro terminal para ngrok:
+   - Abre un nuevo terminal y navega a la carpeta donde descargaste ngrok (`C:\Users\willi\Desktop\ngrok-v3-stable-windows-amd64`).
+
+2. Ejecuta ngrok para exponer tu aplicación React:
+   - Ejecuta el siguiente comando en el terminal:
+     ```
+     .\ngrok.exe http 3000
+     ```
+   - Esto generará una URL pública que te permitirá acceder a tu aplicación desde cualquier dispositivo conectado a internet.
+   - La URL se verá algo así:
+     ```
+     Forwarding  https://a1a9-2803-9810-51b8-e310-b8f5-a56c-9c02-804e.ngrok-free.app -> http://localhost:3000
+     ```
+
+## Paso 3: Acceder al proyecto desde otros dispositivos
+
+1. Copia la URL pública:
+   - Copia la URL que generó ngrok (por ejemplo: `https://a1a9-2803-9810-51b8-e310-b8f5-a56c-9c02-804e.ngrok-free.app`).
+
+2. Abre la URL en tu dispositivo móvil:
+   - En tu celular, abre un navegador y pega la URL en la barra de direcciones.
+   - Verás una advertencia inicial de ngrok con un botón que dice "Visit Site". Haz clic en ese botón para continuar y acceder a tu aplicación.
+
+3. Visualiza tu aplicación React:
+   - Ahora deberías poder ver tu aplicación React ejecutándose en tu celular.
+
+## Consideraciones adicionales
+
+- Limitaciones al usar ngrok: Es posible que algunas funciones, no funcionen correctamente al usar la versión gratuita de ngrok. Esto puede deberse a limitaciones de seguridad o de conexiones establecidas por ngrok.
+
+- Cada vez que reinicies ngrok, obtendrás una nueva URL pública. Si deseas mantener una URL constante, necesitarías una cuenta ngrok de pago.
+
+- Si necesitas hacer pruebas avanzadas, podrías considerar usar la cuenta de pago de ngrok o probar directamente en una red local sin ngrok.
+
+Con este proceso, ya deberías poder visualizar tu proyecto desde cualquier dispositivo, aunque algunas funcionalidades específicas podrían estar limitadas cuando se accede a través de ngrok.

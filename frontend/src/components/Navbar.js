@@ -29,7 +29,7 @@ function NavigationBar() {
           </Nav>
 
           <Nav>
-            <NavDropdown title="Cuenta" id="basic-nav-dropdown" align="end">
+            <NavDropdown title="Inicio de sesión" id="basic-nav-dropdown" align="end">
               {/* Submenú para Clientes */}
               <NavDropdown.Header>Cliente</NavDropdown.Header>
               <NavDropdown.Item as={Link} to="/login-cliente">Iniciar sesión Cliente</NavDropdown.Item>

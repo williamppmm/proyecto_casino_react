@@ -14,6 +14,12 @@ Este documento describe el proceso de implementación del proyecto "Casino La Fo
 6. [Integración del frontend con el backend](#6-integración-del-frontend-con-el-backend)
 7. [Ejecución y pruebas](#7-ejecución-y-pruebas)
 8. [Implementación de registro y login de clientes](#8-implementación-de-registro-y-login-de-clientes)
+9. [Consulta del perfil del cliente desde el backend](#9-consulta-del-perfil-del-cliente-desde-el-backend)
+
+## Anexos
+
+### Visualización del Proyecto React utilizando ngrok
+### Script Base de Datos MySQL Workbench
 
 ## 1. Configuración del entorno de desarrollo
 
@@ -703,7 +709,7 @@ function App() {
 }
 ```
 
-### 8.6. Consulta del perfil del cliente desde el backend
+## 9. Consulta del perfil del cliente desde el backend
 
 Se creó una consulta en el backend que permite obtener la información del cliente registrado, como nombre, apellido, correo electrónico y teléfono, para mostrarla en el dashboard.
 
@@ -735,7 +741,7 @@ app.get('/api/clientes/perfil/:id', (req, res) => {
 });
 ```
 
-### 8.7. Implementación del contador de sesión en la barra de navegación
+### 9.1. Implementación del contador de sesión en la barra de navegación
 
 Se implementó un contador de sesión que se muestra en la barra de navegación y sigue contando el tiempo en que el cliente está conectado. El contador usa el formato hh:mm:ss y se reinicia al cerrar sesión.
 
@@ -792,7 +798,7 @@ function NavbarClientes() {
 export default NavbarClientes;
 ```
 
-### 8.8. Uso de LayoutClientes para estructurar las páginas
+### 9.2. Uso de LayoutClientes para estructurar las páginas
 
 Se implementó LayoutClientes como un componente estructural que contiene la barra de navegación y el botón de WhatsApp. Esto permite mantener una estructura consistente a través de todas las páginas de clientes.
 
@@ -817,7 +823,7 @@ function LayoutClientes({ children }) {
 export default LayoutClientes;
 ```
 
-### 8.9. Dashboard de Clientes
+### 9.3. Dashboard de Clientes
 
 El dashboard muestra los datos del cliente y proporciona accesos directos a varias secciones, como el perfil, el historial de juegos, promociones y soporte. Además, se corrigió el cierre de sesión y se mejoró la navegación dentro del dashboard.
 
@@ -977,7 +983,103 @@ function DashboardClientes() {
 
 export default DashboardClientes;
 ```
-## 9. Consideraciones de seguridad
+### 9.4. Mejoras en el Perfil de Clientes: Modificación de Datos y Cambio de Contraseña
+
+Se trabajó en mejorar la funcionalidad de la página `PerfilClientes.js`, añadiendo las siguientes características:
+
+#### 9.4.1. Modificación de Datos Básicos del Cliente
+
+Se habilitó la posibilidad de que los clientes puedan actualizar sus datos básicos de manera segura, tales como:
+* Teléfono móvil
+* Dirección
+* Municipio
+
+Para ello, se utilizó el siguiente script en el archivo `src/pages/PerfilClientes.js`:
+
+```javascript
+// Ejemplo del código relevante
+<Form onSubmit={handleSubmit}>
+  <Col md={6}>
+    <Form.Group className="mb-3">
+      <Form.Label>Teléfono Móvil</Form.Label>
+      <Form.Control
+        type="tel"
+        name="telefono_movil"
+        value={editableFields.telefono_movil}
+        onChange={handleChange}
+        disabled={!editMode}
+        className="bg-dark text-white"
+      />
+    </Form.Group>
+  </Col>
+</Form>
+```
+
+Este formulario fue configurado para ser enviado al servidor con la API de actualización de perfil, validando los campos como el número de teléfono antes de proceder con la actualización.
+
+#### 9.4.2. Cambio de Contraseña
+
+Se añadió una opción para que los clientes puedan cambiar su contraseña desde el perfil. Esta funcionalidad incluye:
+* Validación de la contraseña actual
+* Verificación de que la nueva contraseña cumpla con los requisitos de seguridad
+* Confirmación de la nueva contraseña
+
+Se implementó un modal para realizar el cambio de contraseña de manera interactiva y segura:
+
+```javascript
+// Modal para cambio de contraseña
+<Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)}>
+  <Modal.Header closeButton>
+    <Modal.Title>Cambiar Contraseña</Modal.Title>
+  </Modal.Header>
+  <Modal.Body>
+    <Form onSubmit={handlePasswordSubmit}>
+      <Form.Group className="mb-3">
+        <Form.Label>Nueva Contraseña</Form.Label>
+        <Form.Control
+          type={passwordVisibility.nuevaPassword ? 'text' : 'password'}
+          name="nuevaPassword"
+          value={passwordData.nuevaPassword}
+          onChange={handlePasswordChange}
+          required
+        />
+      </Form.Group>
+      <Button variant="primary" type="submit">
+        Cambiar Contraseña
+      </Button>
+    </Form>
+  </Modal.Body>
+</Modal>
+```
+
+#### 9.4.3. Consultas en Postman
+
+Se realizaron las siguientes consultas en Postman para probar la actualización del perfil y el cambio de contraseña:
+
+1. **Actualización del perfil de cliente:**
+
+```bash
+POST http://localhost:5000/api/clientes/actualizar-perfil/3
+Body (JSON):
+{
+  "telefono_movil": "3152728882",
+  "direccion": "Calle 45 #67-12",
+  "municipio": "Cartagena"
+}
+```
+
+2. **Actualización de la contraseña:**
+
+```bash
+PUT http://localhost:5000/api/clientes/actualizar-password/1
+Body (JSON):
+{
+  "passwordActual": "contraseña",
+  "nuevaPassword": "Perez1980"
+}
+```
+
+## 10. Consideraciones de seguridad
 
 Al implementar funcionalidades de registro y login, es crucial tener en cuenta las siguientes consideraciones de seguridad:
 
@@ -991,7 +1093,7 @@ Al implementar funcionalidades de registro y login, es crucial tener en cuenta l
 
 5. **Manejo de sesiones**: Implementa un sistema de manejo de sesiones seguro, posiblemente utilizando tokens JWT (JSON Web Tokens) para mantener el estado de autenticación del usuario.
 
-## 10. Próximos pasos
+## 11. Próximos pasos
 
 Después de implementar y probar exitosamente el registro y login de clientes, algunos próximos pasos podrían incluir:
 

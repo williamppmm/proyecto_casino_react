@@ -121,7 +121,7 @@ function RegistroClientes() {
                     <Form.Select name="tipo_documento" value={formData.tipo_documento} onChange={handleChange} required className="bg-dark text-white">
                       <option value="">Selecciona...</option>
                       <option value="CC">Cédula</option>
-                      <option value="TI">Tarjeta de Identidad</option>
+                      <option value="PA">Pasaporte</option>
                     </Form.Select>
                   </Form.Group>
                 </Col>

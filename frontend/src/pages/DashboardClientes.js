@@ -47,17 +47,15 @@ function DashboardClientes() {
             Bienvenido al Dashboard de Clientes
           </h1>
 
-          {/* Mostrar datos del cliente si están disponibles */}
+          {/* Mostrar mensaje de bienvenida con el nombre del cliente */}
           {cliente ? (
             <div className="mb-4 text-center" style={{ color: '#fff' }}>
-              <p><strong>Nombre:</strong> {cliente.nombre} {cliente.apellido}</p>
-              <p><strong>Correo:</strong> {cliente.email}</p>
-              <p><strong>Teléfono:</strong> {cliente.telefono}</p>
+              <h2>{cliente.primer_nombre} {cliente.primer_apellido}, prepárate para vivir momentos inolvidables!</h2>
             </div>
           ) : (
             <p className="text-center text-light">Cargando datos del cliente...</p>
           )}
-
+          
           <Row className="mb-4">
             <Col md={4}>
               <Card className="bg-dark text-white">
